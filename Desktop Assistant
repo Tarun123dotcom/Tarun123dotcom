@@ -1,0 +1,332 @@
+import sys
+import time
+import keyboard
+import pyttsx3
+import speech_recognition as sr
+import datetime
+import os
+import cv2
+import wikipedia
+import pywhatkit
+import webbrowser
+import pyautogui
+import googletrans
+from keyboard import press
+from gtts import gTTS
+from playsound import playsound
+import subprocess
+import winsound
+user_name = str(input('Please type your name: '))
+
+engine = pyttsx3.init()
+voices = engine.getProperty('voices')
+engine.setProperty('voice', voices[1].id)
+
+
+
+
+def alarm(Timing):
+    altime = str(datetime.datetime.now().strptime(Timing, "%I:%M %p"))
+    altime = altime[11 :-3]
+    print(altime)
+    horeal = altime[ :2]
+    horeal = int(horeal)
+    mireal = altime[3:5]
+    mireal = int(mireal)
+    print(f'Done alarm set for {Timing}')
+    while True:
+        if horeal == datetime.datetime.now().hour:
+            if mireal == datetime.datetime.now().minute:
+                engine.say(f'{user_name} please wake up')
+                engine.runAndWait()
+                print('alarm is running')
+                winsound.PlaySound('abc', winsound.SND_LOOP)
+            elif mireal < datetime.datetime.now().minute:
+                break
+
+
+def telugu_speaking(audio):
+    tts = gTTS(audio, lang="te")
+    tts.save("audio.mp3")
+    playsound("audio.mp3")
+    os.remove("audio.mp3")
+
+
+# text to speech
+def speak(audio):
+    engine.say(audio)
+    print(audio)
+    engine.runAndWait()
+
+
+# spech recognisation
+def take_command():
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        print('Listening...')
+        r.pause_threshold = 1
+        audio = r.listen(source, timeout=10, phrase_time_limit=5)
+
+    try:
+        print('Recognizing....')
+        query = r.recognize_google(audio, language='en-in')
+        print(f'user said: {query}')
+    except Exception as e:
+        return 'none'
+    return query
+
+
+# to take command in telugu
+def take_tel():
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        print('Listening...')
+        r.pause_threshold = 1
+        audio = r.listen(source, timeout=10, phrase_time_limit=5)
+
+    try:
+        print('Recognizing')
+        query = r.recognize_google(audio, language='te')
+        print(f'user said: {query}')
+    except Exception as e:
+        return 'none'
+    return query.lower()
+
+
+# To wish
+def wish():
+    hour = int(datetime.datetime.now().hour)
+    tt = time.strftime("%I:%M %p")
+    if hour >= 0 and hour < 12:
+        speak(f'Good Morning {user_name}, its {tt}')
+    elif hour >= 12 and hour <= 18:
+        speak(f'Good afternoon {user_name}, its {tt}')
+    else:
+        speak(f'good evening {user_name}, its {tt}')
+    speak(f'Hi {user_name},My name is gayatri, how can i help you')
+
+
+# to execute task
+def executing_task():
+    wish()
+    while True:
+
+        query = take_command().lower()
+#to opening notepad
+        if 'open notepad' in query:
+            speak('opening notepad')
+            npath = "C:\\Windows\\system32\\notepad.exe"
+            file = subprocess.Popen(npath)
+        elif 'close notepad' in query:
+            speak('closing notepad')
+            file.terminate()
+#to opening camera
+        elif 'open camera' in query:
+            speak("opening camera")
+            opening_camera = subprocess.Popen("C:\\Program Files (x86)\\CyberLink\\YouCam\\YouCam.exe")
+        elif "close camera" in query:
+            opening_camera.terminate()
+# for opening chrome
+        elif 'open chrome' in query:
+            speak('opening chrome')
+            opening_chrome = subprocess.Popen("C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe")
+        elif 'close chrome' in query:
+            speak('closing chrome')
+            opening_chrome.terminate()
+# to search in wikipedia
+        elif 'Wikipedia' in query or 'wikipedia' in query:
+            speak('searching wikipedia...')
+            query = query.replace("in wikipedia", '')
+            query = query.replace('tell me about','')
+            query = query.replace('from','')
+            results = wikipedia.summary(query, sentences=2)
+            speak('according to wikipedia')
+            speak(results)
+# to play video on youtube
+        elif 'on youtube' in query:
+            query = query.replace('play', '')
+            query = query.replace('on youtube', '')
+            speak(f'playing {query} on youtube')
+            pywhatkit.playonyt(query)
+        elif 'i love you' in query:
+            speak(f'Sorry {user_name} i have already boyfriend')
+# to search in google
+        elif 'search on google' in query:
+            speak(f'{user_name} please tell me what to search')
+            google_search = take_command().lower()
+            pywhatkit.search(google_search)
+# to open youtube
+        elif 'open youtube' in query:
+            speak('opening youtube')
+            opening_youtube = subprocess.Popen(["C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe" , "www.youtube.com"])
+        elif 'close youtube' in query:
+            speak('close youtube')
+            opening_youtube.terminate()
+#to open facebook
+        elif 'open facebook' in query:
+            speak('opening facebook')
+            opening_facebook = subprocess.Popen(['C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe' , 'www.facebook.com'])
+        elif 'close facebook' in query:
+            speak('closing facebook')
+            opening_facebook.terminate()
+# to set alarm
+        elif 'alarm' in query:
+            speak(f'{user_name} please type  the time to set alarm, for example , 05:30 AM ')
+            ttime = str(input("hours : min : am or pm : "))
+            alarm(ttime)         
+# TO DO LIST
+        elif 'To do list' in query or 'to do list' in query:
+            to_do_list = []
+            while True:
+                speak(f'{user_name} what do you want to do')
+                query = take_command().lower()
+                if 'add' in query or 'ad' in query:
+                    query = query.replace('add', '')
+                    query = query.replace('ad', '')
+                    to_do_list.append(query)
+                    speak(f'added {query}')
+                elif 'done with' in query or 'remove' in query:
+                    query = query.replace('done with', '')
+                    query = query.replace('remove', '')
+                    if query in to_do_list:
+                        to_do_list.remove(query)
+                        speak(f'removed {query}')
+                    else:
+                        speak('That is not in To Do List')
+                elif 'show' in query:
+                    speak('showing to do list')
+                    print("TO DO LIST")
+                    for items in to_do_list:
+                        print(items)
+                elif 'exit' in query or 'close' in query:
+                    speak(f"Ok {user_name}! Good Bye")
+                    break
+                else:
+                    speak(f"Sorry for inconvenience {user_name}")
+# to send whatsapp message
+        elif 'whatsapp message' in query:
+            speak(f'{user_name} please type the number for which you want to send  message ')
+            a = int(input('number  : '))
+            speak(f'{user_name} please type the message that you want to send')
+            b = str(input('message : '))
+            speak(f'{user_name} please type the hours: ')
+            c = int(input('hours : '))
+            speak(f'{user_name} please type the minutes')
+            d = int(input('minutes : '))
+            speak(f'be cool {user_name} , message will be sent')
+            pywhatkit.sendwhatmsg(f"+91{a}", b, c, d)
+            speak(f' message has been sent {user_name}')
+
+#to open instagram
+        elif 'open instagram' in query:
+            speak('opening instagram')
+            opening_instagram = subprocess.Popen(['C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe','www.instagram.com'])
+        elif 'close instagram' in query:
+            speak('closing instagram')
+            opening_instagram.terminate()
+        elif 'hello' in query or 'hey' in query or 'hai' in query:
+            speak(f'hello {user_name} may i help you  with something ')
+        elif 'how are you' in query:
+            speak(f'I am fine {user_name} what about you')
+        elif 'also good' in query or 'fine' in query:
+            speak(f"that's great to here from you {user_name}")
+        elif 'thank you' in query:
+            speak(f'it is my pleasure {user_name}')
+        elif 'you can sleep' in query:
+            speak(f'{user_name} i am going to sleep you can call me anytime ')
+            break
+#to check battery percentage
+        elif 'battery' in query or 'how much power we have' in query or 'how much power left' in query:
+            import psutil
+            battery = psutil.sensors_battery()
+            percentage = battery.percent
+            speak(f"{user_name}  our system have {percentage} percent battery")
+
+        elif 'very good' in query or 'good' in query:
+            speak(f"That's my pleasure {user_name}")
+        elif 'bad' in query or 'worst' in query:
+            speak(f"sorry {user_name}")
+#to read the book
+        elif 'read the book' in query:
+            import PyPDF2
+            book = open('C:\\Users\\Welcome\\Downloads\\englishgrammarbook.pdf', 'rb')
+            pdfReader = PyPDF2.PdfFileReader(book)
+            pages = pdfReader.numPages
+            speak(f"Total number of pages in this book {pages} ")
+            speak(f'{user_name} please enter the page number i have to read')
+            pg = int(input('please enter the page number: '))
+            page = pdfReader.getPage(pg)
+            text = page.extractText()
+            speak(text)
+#to get process for anything
+        elif 'activate how to do mode' in query:
+            from pywikihow import search_wikihow
+            while True:
+                speak(f'how to do mode is activated {user_name} tell me what do you want to do ')
+                how = take_command()
+                try:
+                    if 'exit' in how or 'close' in how:
+                        speak(f'ok {user_name}, how to do mode is closed')
+                        break
+                    else:
+                        max_results = 1
+                        how_to = search_wikihow(how, max_results)
+                        assert len(how_to) == 1
+                        how_to[0].print()
+                        speak(how_to[0].summary)
+                except Exception as e:
+                    speak(f'sorry {user_name} i am not able to find that')
+        elif 'will you marry me' in query:
+            speak(f'Sorry {user_name} i am already engaged with wifi')
+
+# translate telugu to english
+        elif 'translate telugu to english' in query:
+            telugu_speaking('మీరు ఆంగ్లంలో అనువదించాలనుకుంటున్న పంక్తిని నాకు చెప్పండి')
+
+            while True:
+                telugu_line = take_tel().lower()
+                telugu_line = telugu_line.replace('translate', '')
+                telugu_line = telugu_line.replace('to', '')
+                if 'ఆపు' not in telugu_line:
+                    translater = googletrans.Translator()
+                    translaed = translater.translate(telugu_line, dest="en")
+                    print(translaed.text)
+                    speak(f"the translated line is {translaed.text}")
+                elif 'ఆపు' in telugu_line:
+                    break
+# translate english to telugu
+        elif 'translate english to telugu' in query:
+            speak(f'{user_name} tell me the line that you want to translate in telugu')
+            while True:
+                eng_line = take_command().lower()
+                eng_line = eng_line.replace('translate', '')
+                eng_line = eng_line.replace('in telugu', '')
+                if 'close' not in eng_line:
+                    translater = googletrans.Translator()
+                    translaed = translater.translate(eng_line, dest="te")
+                    telugu_trans = translaed.text
+                    print(telugu_trans)
+                    speak(f"the translated line is {translaed.text}")
+                    telugu_speaking(telugu_trans)
+                elif 'close' in eng_line:
+                    break
+# to sing a song
+        elif 'sing a song' in query:
+            playsound(samajavaragamana.mp3)
+# to type anything
+        elif 'type' in query:
+            speak(f'{user_name} tell me what to type')
+            typing_usersaid = take_command()
+            typing_usersaid = typing_usersaid.replace("type", '')
+            keyboard.write(typing_usersaid)
+# to take screenshot
+        elif 'take screenshot' in query:
+            speak(f'{user_name} , please tell me the name for screenshot file')
+            name = take_command().lower()
+            speak(f' {user_name} please hold the screen for few seconds i am taking screenshot ')
+            time.sleep(3)
+            img = pyautogui.screenshot()
+            img.save(f"{name}.png")
+            speak(f'done {user_name} screenshot taken')
+if __name__ == "__main__":
+    executing_task()
